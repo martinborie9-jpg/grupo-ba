@@ -480,6 +480,7 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
 
     <div class="toolbar">
       <button class="btn-gold" onclick="fichaAdd()">+ Agregar producto</button>
+      <button class="btn-ghost" onclick="fichaExportCSV()">↓ Exportar CSV</button>
       <button class="btn-ghost" onclick="fichaExport()">↓ Exportar JSON</button>
       <button class="btn-ghost" onclick="window.print()">🖨 Imprimir</button>
     </div>
@@ -704,6 +705,37 @@ function fichaExport() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type:'application/json' }));
   a.download = `ficha-${out.fecha || 'sin-fecha'}.json`; a.click();
+}
+
+function fichaExportCSV() {
+  const cliente = document.getElementById('fi-cliente').value || '';
+  const fecha   = document.getElementById('fi-fecha').value   || '';
+  const headers = ['#','Nombre','Categoría','Referencia/SKU','Descripción','Material','Medidas','Precio Unitario USD','MOQ','Precio por Volumen','Muestra','Certificaciones'];
+  let csv = `Cliente: "${cliente}" — Fecha: "${fecha}"\n\n`;
+  csv += headers.map(h => `"${h}"`).join(',') + '\n';
+  document.querySelectorAll('#ficha-cards .card').forEach((c, i) => {
+    const f = {};
+    c.querySelectorAll('[data-f]').forEach(el => f[el.dataset.f] = (el.value || '').replace(/"/g,'""'));
+    const row = [
+      i + 1,
+      f.nombre    || '',
+      f.categoria || '',
+      f.ref       || '',
+      f.desc      || '',
+      f.material  || '',
+      f.medidas   || '',
+      f.precio_u  || '',
+      f.moq       || '',
+      f.vol       || '',
+      f.muestra   || '',
+      f.cert      || ''
+    ];
+    csv += row.map(v => `"${v}"`).join(',') + '\n';
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = `ficha-productos-${fecha || 'sin-fecha'}.csv`;
+  a.click();
 }
 
 // ═══════════════════════════════════════
