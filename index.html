@@ -476,6 +476,10 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
         <label class="f-label">Fecha reunión</label>
         <input class="f-input" id="fi-fecha" type="date" style="width:160px">
       </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label class="f-label">Tipo de cambio USD → CLP</label>
+        <input class="f-input" id="fi-tc" type="number" value="950" min="1" placeholder="950" style="width:150px" oninput="fichaRecalcAll()">
+      </div>
     </div>
 
     <div class="toolbar">
@@ -657,7 +661,14 @@ function fichaAdd() {
       <div class="cell full"><label class="f-label">Descripción</label><textarea class="f-textarea" rows="2" placeholder="¿Qué es? ¿Para qué sirve?" data-f="desc"></textarea></div>
       <div class="cell"><label class="f-label">Material / Composición</label><input class="f-input" placeholder="Nitrilo, látex, polipropileno…" data-f="material"></div>
       <div class="cell even"><label class="f-label">Medidas / Presentación</label><input class="f-input" placeholder="S/M/L · caja x100 · 60x90cm" data-f="medidas"></div>
-      <div class="cell"><label class="f-label">Precio unitario (USD)</label><input class="f-input" type="number" step="0.001" min="0" placeholder="0.000" data-f="precio_u"></div>
+      <div class="cell">
+        <label class="f-label">Precio proveedor (USD)</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input class="f-input" type="number" step="0.001" min="0" placeholder="0.000" data-f="precio_u" id="fpu-${n}" oninput="fichaRecalc(${n})" style="flex:1">
+          <span style="font-size:0.7rem;color:var(--muted);white-space:nowrap">USD</span>
+        </div>
+        <div style="margin-top:5px;font-size:0.75rem;color:var(--gold);font-weight:600" id="fclp-${n}">— CLP</div>
+      </div>
       <div class="cell even"><label class="f-label">MOQ (unidades mín.)</label><input class="f-input" type="number" min="1" placeholder="100" data-f="moq"></div>
       <div class="cell"><label class="f-label">Precio por volumen</label><input class="f-input" placeholder="$0.18 × 1.000 u." data-f="vol"></div>
       <div class="cell even"><label class="f-label">Muestra disponible</label>
@@ -676,6 +687,23 @@ function fichaAdd() {
   `;
   document.getElementById('ficha-cards').appendChild(div);
   updateHomeStats();
+}
+
+function fichaRecalcAll() {
+  document.querySelectorAll('#ficha-cards .card').forEach(c => {
+    const n = parseInt(c.id.replace('fc-',''));
+    fichaRecalc(n);
+  });
+}
+
+function fichaRecalc(n) {
+  const tc  = parseFloat(document.getElementById('fi-tc')?.value) || 950;
+  const usd = parseFloat(document.getElementById(`fpu-${n}`)?.value) || 0;
+  const clpEl = document.getElementById(`fclp-${n}`);
+  if (!clpEl) return;
+  if (!usd) { clpEl.textContent = '— CLP'; return; }
+  const clp = usd * tc;
+  clpEl.textContent = '≈ $' + Math.round(clp).toLocaleString('es-CL') + ' CLP';
 }
 
 function fichaPhoto(e, n) {
