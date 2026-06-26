@@ -552,6 +552,7 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
       <div class="bar-chart" id="canal-chart" style="align-items:flex-end;height:100px;">
         <div class="bar-item"><div class="bar-fill" id="bar-b2b" style="height:4px"></div><div class="bar-lbl">Clínicas B2B</div></div>
         <div class="bar-item"><div class="bar-fill" id="bar-mp"  style="height:4px;background:#3b82f6"></div><div class="bar-lbl">Merc. Público</div></div>
+        <div class="bar-item"><div class="bar-fill" id="bar-directo" style="height:4px;background:#a855f7"></div><div class="bar-lbl">Directo</div></div>
       </div>
     </div>
 
@@ -564,6 +565,7 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
           <select class="f-select" id="ns-canal">
             <option value="b2b">Clínicas B2B</option>
             <option value="mp">Mercado Público</option>
+            <option value="directo">Directo</option>
           </select>
         </div>
         <div class="form-field"><label class="f-label">Ingreso total (CLP)</label><input class="f-input" id="ns-ing" type="number" placeholder="0" min="0"></div>
@@ -802,7 +804,7 @@ function evalAdd() {
       </div>
       <div class="cell even"><label class="f-label">Canal de venta</label>
         <select class="f-select" id="e${n}-canal" onchange="evalRecalc(${n})">
-          <option value="b2b">Clínicas B2B</option><option value="mp">Mercado Público</option><option value="ambos">Ambos</option>
+          <option value="b2b">Clínicas B2B</option><option value="mp">Mercado Público</option><option value="directo">Directo</option><option value="ambos">Ambos</option>
         </select>
       </div>
       <div class="cell">
@@ -999,7 +1001,7 @@ function delSale(id) {
 
 const estadoBadge = { cerrado:'bp-g', pendiente:'bp-y', en_proceso:'bp-b' };
 const estadoLabel = { cerrado:'✅ Cerrado', pendiente:'🕐 Pendiente', en_proceso:'🔄 En proceso' };
-const canalLabel  = { b2b:'Clínicas B2B', mp:'Merc. Público' };
+const canalLabel  = { b2b:'Clínicas B2B', mp:'Merc. Público', directo:'Directo' };
 
 function renderSales() {
   const tb = document.getElementById('sales-tbody');
@@ -1047,8 +1049,11 @@ function updateDashKPIs() {
   const b2b = byCanal['b2b']||0;
   const mp  = byCanal['mp'] ||0;
   const maxBar = Math.max(b2b, mp, 1);
-  document.getElementById('bar-b2b').style.height = Math.max((b2b/maxBar)*90, 4)+'px';
-  document.getElementById('bar-mp').style.height  = Math.max((mp /maxBar)*90, 4)+'px';
+  const directo = byCanal['directo'] || 0;
+  const maxBar2 = Math.max(b2b, mp, directo, 1);
+  document.getElementById('bar-b2b').style.height     = Math.max((b2b    /maxBar2)*90, 4)+'px';
+  document.getElementById('bar-mp').style.height      = Math.max((mp     /maxBar2)*90, 4)+'px';
+  document.getElementById('bar-directo').style.height = Math.max((directo/maxBar2)*90, 4)+'px';
 
   updateHomeStats();
 }
