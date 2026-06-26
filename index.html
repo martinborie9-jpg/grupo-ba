@@ -538,7 +538,8 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
 
     <!-- KPIs -->
     <div class="dash-grid" id="dash-kpis">
-      <div class="dash-kpi accent"><div class="dk-lbl">Utilidad neta acumulada</div><div class="dk-val" id="dk-util">$0</div><div class="dk-sub">CLP total</div></div>
+      <div class="dash-kpi accent"><div class="dk-lbl">Utilidad neta total</div><div class="dk-val" id="dk-util">$0</div><div class="dk-sub">CLP acumulado</div></div>
+      <div class="dash-kpi g"><div class="dk-lbl">Mi utilidad</div><div class="dk-val" id="dk-util-yo">$0</div><div class="dk-sub">después de socios</div></div>
       <div class="dash-kpi g"><div class="dk-lbl">Ingresos totales</div><div class="dk-val" id="dk-ing">$0</div><div class="dk-sub">precio venta</div></div>
       <div class="dash-kpi"><div class="dk-lbl">Operaciones</div><div class="dk-val" id="dk-ops">0</div><div class="dk-sub">ventas registradas</div></div>
       <div class="dash-kpi"><div class="dk-lbl">Margen promedio</div><div class="dk-val" id="dk-marg">—</div><div class="dk-sub">neto %</div></div>
@@ -598,7 +599,9 @@ button { cursor: pointer; border: none; border-radius: 7px; font-size: 0.78rem; 
               <th>Canal</th>
               <th>Ingreso</th>
               <th>Costo</th>
-              <th>Utilidad</th>
+              <th>Utilidad total</th>
+              <th>Mi parte</th>
+              <th>Socio</th>
               <th>Margen</th>
               <th>Estado</th>
               <th>Fecha</th>
@@ -1082,7 +1085,9 @@ function renderSales() {
       <td>${fmtCLP(s.ing)}</td>
       <td>${fmtCLP(s.costo)}</td>
       <td style="color:${s.util>=0?'var(--green)':'var(--red)'};font-weight:600">${fmtCLP(s.util)}</td>
-      <td style="color:${s.margen>=20?'var(--green)':s.margen>=10?'var(--yellow)':'var(--red)'}">${fmtPct(s.margen)}</td>
+      <td style="color:var(--green);font-weight:600">${s.socioYoPct>0 ? fmtCLP(s.utilYo) : '—'}</td>
+      <td style="color:var(--muted2)">${s.socioYoPct>0 ? `${s.socioNombre||'Socio'} ${fmtCLP(s.utilSocio)}` : '—'}</td>
+      <td style="color:${s.margen>=15?'var(--green)':s.margen>=8?'var(--yellow)':'var(--red)'}">${fmtPct(s.margen)}</td>
       <td><span class="badge-pill ${estadoBadge[s.estado]||'bp-b'}">${estadoLabel[s.estado]||s.estado}</span></td>
       <td>${s.fecha}</td>
       <td><button class="del-btn" onclick="delSale(${s.id})">×</button></td>
@@ -1091,9 +1096,10 @@ function renderSales() {
 }
 
 function updateDashKPIs() {
-  const totalUtil = sales.reduce((a,s) => a+s.util, 0);
-  const totalIng  = sales.reduce((a,s) => a+s.ing,  0);
-  const avgMarg   = sales.length ? sales.reduce((a,s)=>a+s.margen,0)/sales.length : 0;
+  const totalUtil   = sales.reduce((a,s) => a+s.util, 0);
+  const totalUtilYo = sales.reduce((a,s) => a+(s.socioYoPct>0 ? s.utilYo : s.util), 0);
+  const totalIng    = sales.reduce((a,s) => a+s.ing,  0);
+  const avgMarg     = sales.length ? sales.reduce((a,s)=>a+s.margen,0)/sales.length : 0;
 
   const byCanal = {};
   sales.forEach(s => { byCanal[s.canal] = (byCanal[s.canal]||0) + s.util; });
@@ -1103,8 +1109,9 @@ function updateDashKPIs() {
   sales.forEach(s => { byProd[s.prod] = (byProd[s.prod]||0) + s.util; });
   const topProd = Object.entries(byProd).sort((a,b)=>b[1]-a[1])[0];
 
-  document.getElementById('dk-util').textContent  = fmtCLP(totalUtil);
-  document.getElementById('dk-ing').textContent   = fmtCLP(totalIng);
+  document.getElementById('dk-util').textContent     = fmtCLP(totalUtil);
+  document.getElementById('dk-util-yo').textContent  = fmtCLP(totalUtilYo);
+  document.getElementById('dk-ing').textContent      = fmtCLP(totalIng);
   document.getElementById('dk-ops').textContent   = sales.length;
   document.getElementById('dk-marg').textContent  = sales.length ? fmtPct(avgMarg) : '—';
   document.getElementById('dk-canal').textContent = topCanal ? canalLabel[topCanal[0]] : '—';
@@ -1141,10 +1148,18 @@ function sendToDash(n) {
   const margen = parseFloat(ve.dataset.margen) || 0;
   const qty    = parseFloat(ve.dataset.qty)    || 0;
 
+  // Socio data
+  const socioYoPct     = parseFloat(document.getElementById(`e${n}-socio-yo`)?.value) || 0;
+  const socioNombre    = document.getElementById(`e${n}-socio-nombre`)?.value || '';
+  const socioElPct     = socioYoPct > 0 ? 100 - socioYoPct : 0;
+  const utilYo         = socioYoPct > 0 ? util * (socioYoPct / 100) : util;
+  const utilSocio      = socioYoPct > 0 ? util * (socioElPct / 100) : 0;
+
   saleId++;
   sales.push({
     id: saleId,
     prod, canal, ing, costo, util, margen, qty,
+    socioNombre, socioYoPct, socioElPct, utilYo, utilSocio,
     estado: 'en_proceso',
     fecha: new Date().toISOString().slice(0,10)
   });
