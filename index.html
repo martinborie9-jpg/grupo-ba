@@ -805,7 +805,18 @@ function evalAdd() {
           <option value="b2b">Clínicas B2B</option><option value="mp">Mercado Público</option><option value="ambos">Ambos</option>
         </select>
       </div>
-      <div class="cell"><label class="f-label">Precio venta unitario (CLP)</label><input class="f-input" id="e${n}-pventa" type="number" min="0" placeholder="0" oninput="evalRecalc(${n})"></div>
+      <div class="cell">
+        <label class="f-label">Precio venta (CLP) — ¿Incluye IVA?</label>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <input class="f-input" id="e${n}-pventa-bruto" type="number" min="0" placeholder="2200" oninput="evalRecalc(${n})" style="flex:1">
+          <select class="f-select" id="e${n}-iva-inc" onchange="evalRecalc(${n})" style="width:110px">
+            <option value="si">Con IVA</option>
+            <option value="no">Sin IVA</option>
+          </select>
+        </div>
+        <div style="font-size:0.72rem;color:var(--muted2)">Precio neto (sin IVA): <span style="color:var(--gold);font-weight:600" id="e${n}-pventa-neto">—</span></div>
+        <input type="hidden" id="e${n}-pventa">
+      </div>
       <div class="cell even"><label class="f-label">Mi margen intermediario (%)</label><input class="f-input" id="e${n}-margen" type="number" min="0" max="100" step="0.1" placeholder="20" oninput="evalRecalc(${n})"></div>
       <div class="cell"><label class="f-label">Bodegaje + distrib. (CLP total)</label><input class="f-input" id="e${n}-bodega" type="number" min="0" step="100" placeholder="0" oninput="evalRecalc(${n})"></div>
       <div class="cell even"><label class="f-label">Comisión licitación (%)</label><input class="f-input" id="e${n}-com" type="number" min="0" max="100" step="0.1" placeholder="0" oninput="evalRecalc(${n})"></div>
@@ -850,7 +861,17 @@ function evalRecalc(n) {
   const g   = evalGlobals();
   const fob = parseFloat(document.getElementById(`e${n}-fob`)?.value)    || 0;
   const qty = parseFloat(document.getElementById(`e${n}-qty`)?.value)    || 0;
-  const pv  = parseFloat(document.getElementById(`e${n}-pventa`)?.value) || 0;
+  // Precio venta: calcular neto sin IVA
+  const pvBruto  = parseFloat(document.getElementById(`e${n}-pventa-bruto`)?.value) || 0;
+  const ivaInc   = document.getElementById(`e${n}-iva-inc`)?.value || 'si';
+  const pvNeto   = pvBruto > 0 ? (ivaInc === 'si' ? pvBruto / 1.19 : pvBruto) : 0;
+  // Update neto display
+  const netoEl = document.getElementById(`e${n}-pventa-neto`);
+  if (netoEl) netoEl.textContent = pvNeto > 0 ? fmtCLP(pvNeto) : '—';
+  // Set hidden field for compatibility
+  const pvHidden = document.getElementById(`e${n}-pventa`);
+  if (pvHidden) pvHidden.value = pvNeto || '';
+  const pv  = pvNeto;
   const mg  = (parseFloat(document.getElementById(`e${n}-margen`)?.value)|| 0) / 100;
   const bod = parseFloat(document.getElementById(`e${n}-bodega`)?.value) || 0;
   const com = (parseFloat(document.getElementById(`e${n}-com`)?.value)   || 0) / 100;
