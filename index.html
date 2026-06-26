@@ -936,9 +936,24 @@ function evalRecalc(n) {
   // verdict
   const ve = document.getElementById(`everdict-${n}`);
   if (!pventa_u) { ve.className='verdict na'; ve.innerHTML='<span>⚪</span><span>Ingresa precio de venta</span>'; }
-  else if (margen_r>=20 && roi>=25) { ve.className='verdict go'; ve.innerHTML=`<span>🟢</span><span>Negocio atractivo — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}</span>`; }
-  else if (margen_r>=10 || roi>=12) { ve.className='verdict maybe'; ve.innerHTML=`<span>🟡</span><span>Negocio marginal — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}. Revisar precio o volumen.</span>`; }
+  else if (margen_r>=20 && roi>=25) {
+    ve.className='verdict go';
+    ve.innerHTML=`<span>🟢</span><span style="flex:1">Negocio atractivo — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}</span><button onclick="sendToDash(${n})" style="background:#22c55e;color:#08090c;border:none;border-radius:6px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap">📊 Registrar venta</button>`;
+  }
+  else if (margen_r>=10 || roi>=12) {
+    ve.className='verdict maybe';
+    ve.innerHTML=`<span>🟡</span><span style="flex:1">Negocio marginal — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}. Revisar precio o volumen.</span><button onclick="sendToDash(${n})" style="background:#f59e0b;color:#08090c;border:none;border-radius:6px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap">📊 Registrar venta</button>`;
+  }
   else { ve.className='verdict no'; ve.innerHTML=`<span>🔴</span><span>No viable — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}</span>`; }
+  
+  // Store calc data for sendToDash
+  ve.dataset.prod    = document.getElementById(`ec-${n}`)?.querySelector('.card-title-in')?.value || `Producto ${n}`;
+  ve.dataset.canal   = document.getElementById(`e${n}-canal`)?.value || 'b2b';
+  ve.dataset.ing     = Math.round(venta_tot);
+  ve.dataset.costo   = Math.round(landed_tot + com_tot);
+  ve.dataset.util    = Math.round(util_n_t);
+  ve.dataset.margen  = margen_r.toFixed(1);
+  ve.dataset.qty     = qty;
 }
 
 function evalResetResult(n) {
@@ -1056,6 +1071,35 @@ function updateDashKPIs() {
   document.getElementById('bar-directo').style.height = Math.max((directo/maxBar2)*90, 4)+'px';
 
   updateHomeStats();
+}
+
+// ═══════════════════════════════════════
+// SEND TO DASHBOARD
+// ═══════════════════════════════════════
+function sendToDash(n) {
+  const ve = document.getElementById(`everdict-${n}`);
+  if (!ve) return;
+  const prod   = ve.dataset.prod   || `Producto ${n}`;
+  const canal  = ve.dataset.canal  || 'b2b';
+  const ing    = parseFloat(ve.dataset.ing)    || 0;
+  const costo  = parseFloat(ve.dataset.costo)  || 0;
+  const util   = parseFloat(ve.dataset.util)   || 0;
+  const margen = parseFloat(ve.dataset.margen) || 0;
+  const qty    = parseFloat(ve.dataset.qty)    || 0;
+
+  saleId++;
+  sales.push({
+    id: saleId,
+    prod, canal, ing, costo, util, margen, qty,
+    estado: 'en_proceso',
+    fecha: new Date().toISOString().slice(0,10)
+  });
+  renderSales();
+  updateDashKPIs();
+
+  // Visual feedback
+  ve.innerHTML = ve.innerHTML.replace('📊 Registrar venta', '✅ Enviado al Dashboard');
+  setTimeout(() => goTo('dash'), 800);
 }
 
 // ═══════════════════════════════════════
