@@ -822,6 +822,23 @@ function evalAdd() {
       <div class="cell even"><label class="f-label">Mi margen intermediario (%)</label><input class="f-input" id="e${n}-margen" type="number" min="0" max="100" step="0.1" placeholder="20" oninput="evalRecalc(${n})"></div>
       <div class="cell"><label class="f-label">Bodegaje + distrib. (CLP total)</label><input class="f-input" id="e${n}-bodega" type="number" min="0" step="100" placeholder="0" oninput="evalRecalc(${n})"></div>
       <div class="cell even"><label class="f-label">Comisión licitación (%)</label><input class="f-input" id="e${n}-com" type="number" min="0" max="100" step="0.1" placeholder="0" oninput="evalRecalc(${n})"></div>
+      <div class="cell full" style="border-bottom:1px solid var(--border);background:rgba(201,168,76,0.03)">
+        <label class="f-label" style="color:var(--gold)">👥 División con socio (opcional)</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:2px;">
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+            <label class="f-label">Mi participación (%)</label>
+            <input class="f-input" id="e${n}-socio-yo" type="number" min="0" max="100" step="1" placeholder="50" oninput="evalRecalc(${n})">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+            <label class="f-label">Socio (%)</label>
+            <input class="f-input" id="e${n}-socio-el" type="number" min="0" max="100" step="1" placeholder="50" oninput="evalRecalc(${n})" readonly style="opacity:0.6">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+            <label class="f-label">Nombre socio</label>
+            <input class="f-input" id="e${n}-socio-nombre" type="text" placeholder="Ej: Carlos">
+          </div>
+        </div>
+      </div>
 
       <!-- RESULTS -->
       <div class="results-block">
@@ -835,6 +852,13 @@ function evalAdd() {
           <div class="kpi"><div class="k-lbl">Margen neto (%)</div><div class="k-val" id="er${n}-mg">—</div></div>
           <div class="kpi"><div class="k-lbl">ROI</div><div class="k-val" id="er${n}-roi">—</div></div>
           <div class="kpi"><div class="k-lbl">Inversión requerida</div><div class="k-val" id="er${n}-inv">—</div></div>
+        </div>
+        <div id="esocio-${n}" style="display:none;margin-bottom:12px;">
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:8px;">👥 División por socio</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="kpi g"><div class="k-lbl">Mi utilidad (<span id="esocio-pct-yo-${n}">50</span>%)</div><div class="k-val" id="esocio-util-yo-${n}">—</div></div>
+            <div class="kpi"><div class="k-lbl">Socio <span id="esocio-nombre-lbl-${n}"></span> (<span id="esocio-pct-el-${n}">50</span>%)</div><div class="k-val" id="esocio-util-el-${n}">—</div></div>
+          </div>
         </div>
         <div class="waterfall" id="ewf-${n}">
           <div class="wf-row"><span class="wf-lbl b">Cascada de costos</span><span class="wf-val">—</span></div>
@@ -946,6 +970,36 @@ function evalRecalc(n) {
   }
   else { ve.className='verdict no'; ve.innerHTML=`<span>🔴</span><span>No viable — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}</span>`; }
   
+  // Socio division
+  const socioYoPct = parseFloat(document.getElementById(`e${n}-socio-yo`)?.value);
+  const socioBlock = document.getElementById(`esocio-${n}`);
+  const socioNombre = document.getElementById(`e${n}-socio-nombre`)?.value || 'Socio';
+  if (socioBlock) {
+    if (!isNaN(socioYoPct) && socioYoPct > 0 && socioYoPct <= 100 && pventa_u) {
+      const socioElPct = 100 - socioYoPct;
+      // Update readonly socio field
+      const socioElInput = document.getElementById(`e${n}-socio-el`);
+      if (socioElInput) socioElInput.value = socioElPct;
+      // Update labels
+      const lblYo = document.getElementById(`esocio-pct-yo-${n}`);
+      const lblEl = document.getElementById(`esocio-pct-el-${n}`);
+      const lblNombre = document.getElementById(`esocio-nombre-lbl-${n}`);
+      if (lblYo) lblYo.textContent = socioYoPct.toFixed(0);
+      if (lblEl) lblEl.textContent = socioElPct.toFixed(0);
+      if (lblNombre) lblNombre.textContent = socioNombre;
+      // Calc utilities
+      const utilYo = util_n_t * (socioYoPct / 100);
+      const utilEl = util_n_t * (socioElPct / 100);
+      const elYo = document.getElementById(`esocio-util-yo-${n}`);
+      const elEl = document.getElementById(`esocio-util-el-${n}`);
+      if (elYo) elYo.textContent = fmtCLP(utilYo);
+      if (elEl) elEl.textContent = fmtCLP(utilEl);
+      socioBlock.style.display = 'block';
+    } else {
+      socioBlock.style.display = 'none';
+    }
+  }
+
   // Store calc data for sendToDash
   ve.dataset.prod    = document.getElementById(`ec-${n}`)?.querySelector('.card-title-in')?.value || `Producto ${n}`;
   ve.dataset.canal   = document.getElementById(`e${n}-canal`)?.value || 'b2b';
