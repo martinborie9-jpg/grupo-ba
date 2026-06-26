@@ -910,7 +910,7 @@ function evalRecalc(n) {
   // kpi colors
   const ks = document.getElementById(`ekpis-${n}`)?.querySelectorAll('.kpi');
   if (ks && pventa_u) {
-    [[3, util_b_u, 1, 0], [4, util_n_t, 1, 0], [5, margen_r, 20, 10], [6, roi, 30, 15]].forEach(([i, val, t1, t2]) => {
+    [[3, util_b_u, 1, 0], [4, util_n_t, 1, 0], [5, margen_r, 15, 8], [6, roi, 15, 8]].forEach(([i, val, t1, t2]) => {
       ks[i].className = 'kpi ' + (val >= t1 ? 'g' : val >= t2 ? 'y' : 'r');
     });
   }
@@ -936,11 +936,11 @@ function evalRecalc(n) {
   // verdict
   const ve = document.getElementById(`everdict-${n}`);
   if (!pventa_u) { ve.className='verdict na'; ve.innerHTML='<span>⚪</span><span>Ingresa precio de venta</span>'; }
-  else if (margen_r>=20 && roi>=25) {
+  else if (margen_r>=15 && roi>=15) {
     ve.className='verdict go';
     ve.innerHTML=`<span>🟢</span><span style="flex:1">Negocio atractivo — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}</span><button onclick="sendToDash(${n})" style="background:#22c55e;color:#08090c;border:none;border-radius:6px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap">📊 Registrar venta</button>`;
   }
-  else if (margen_r>=10 || roi>=12) {
+  else if (margen_r>=8 || roi>=8) {
     ve.className='verdict maybe';
     ve.innerHTML=`<span>🟡</span><span style="flex:1">Negocio marginal — Margen ${fmtPct(margen_r)}, ROI ${fmtPct(roi)}. Revisar precio o volumen.</span><button onclick="sendToDash(${n})" style="background:#f59e0b;color:#08090c;border:none;border-radius:6px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap">📊 Registrar venta</button>`;
   }
