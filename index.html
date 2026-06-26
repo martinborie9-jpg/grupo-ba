@@ -775,10 +775,10 @@ let evalCount = 0;
 function evalGlobals() {
   return {
     tc:    parseFloat(document.getElementById('g-tc')?.value)    || 950,
-    flete: (parseFloat(document.getElementById('g-flete')?.value)|| 8)   / 100,
-    dai:   (parseFloat(document.getElementById('g-dai')?.value)  || 6)   / 100,
-    iva:   (parseFloat(document.getElementById('g-iva')?.value)  || 19)  / 100,
-    admin: (parseFloat(document.getElementById('g-admin')?.value)|| 5)   / 100,
+    flete: (isNaN(parseFloat(document.getElementById('g-flete')?.value)) ? 8  : parseFloat(document.getElementById('g-flete')?.value)) / 100,
+    dai:   (isNaN(parseFloat(document.getElementById('g-dai')?.value))   ? 6  : parseFloat(document.getElementById('g-dai')?.value))   / 100,
+    iva:   (isNaN(parseFloat(document.getElementById('g-iva')?.value))   ? 19 : parseFloat(document.getElementById('g-iva')?.value))   / 100,
+    admin: (isNaN(parseFloat(document.getElementById('g-admin')?.value)) ? 5  : parseFloat(document.getElementById('g-admin')?.value)) / 100,
   };
 }
 
